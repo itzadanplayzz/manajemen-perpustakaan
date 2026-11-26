@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.iml
+*.swp
+
+# Log
+*.log
+
+# Build & cache
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.gradle/
+.kotlin/
+coverage/
+
+# Android lokal
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+
+# Artefak rilis
+*.apk
+*.aab
+*.zip

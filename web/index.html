@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manajemen Perpustakaan - Katalog dan Sirkulasi</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="perpustakaan.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a href="#konten-utama" class="skip-link">Lewati ke konten utama</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-text">
+          <span class="brand-title">Arsip Pustaka</span>
+          <span class="brand-subtitle">Katalog buku dan sirkulasi</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button
+          type="button"
+          id="menu-toggle"
+          class="btn btn-secondary menu-toggle"
+          aria-expanded="false"
+          aria-controls="nav-utama"
+        >
+          Menu
+        </button>
+
+        <nav id="nav-utama" class="main-nav" aria-label="Navigasi utama">
+          <a href="#katalog">Katalog Buku</a>
+          <a href="#sirkulasi">Meja Sirkulasi</a>
+          <a href="#riwayat">Riwayat</a>
+        </nav>
+
+        <button
+          type="button"
+          id="theme-toggle"
+          class="btn btn-secondary theme-toggle"
+          aria-pressed="false"
+        >
+          <svg class="icon-theme" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+          </svg>
+          <span id="theme-label">Mode Gelap</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="konten-utama" tabindex="-1" class="container">
+    <section class="masthead" aria-labelledby="judul-halaman">
+      <div class="masthead-copy">
+        <h1 id="judul-halaman">Manajemen Perpustakaan</h1>
+        <p class="lead">
+          Kelola koleksi buku, periksa ketersediaan stok sebelum peminjaman, dan catat pengembalian untuk transaksi yang terdaftar.
+        </p>
+      </div>
+
+      <dl class="ledger-strip" aria-label="Ringkasan catatan perpustakaan">
+        <div class="ledger-item">
+          <dt>Judul tercatat</dt>
+          <dd id="stat-judul">0</dd>
+        </div>
+        <div class="ledger-item">
+          <dt>Total stok tersedia</dt>
+          <dd id="stat-stok">0</dd>
+        </div>
+        <div class="ledger-item">
+          <dt>Sedang dipinjam</dt>
+          <dd id="stat-pinjam">0</dd>
+        </div>
+        <div class="ledger-item">
+          <dt>Batas pinjaman aktif</dt>
+          <dd id="stat-batas">3 buku / anggota</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div id="status-banner" class="banner banner-info" role="status" aria-live="polite" hidden></div>
+    <div id="error-banner" class="banner banner-error" role="alert" hidden>
+      <span id="error-banner-text"></span>
+      <button type="button" id="btn-muat-ulang" class="btn btn-secondary btn-sm">Hubungkan Ulang</button>
+    </div>
+    <div id="loading-state" class="state-box" role="status" aria-live="polite" hidden>
+      Memuat data katalog dari database MySQL...
+    </div>
+
+    <div class="workspace">
+      <section id="katalog" class="panel" aria-labelledby="judul-katalog">
+        <div class="panel-head">
+          <div>
+            <h2 id="judul-katalog">Daftar dan Pencarian Buku</h2>
+            <p class="panel-desc">Cari koleksi berdasarkan ID buku atau judul, lalu periksa stoknya.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="field search-field">
+            <label for="cari-buku">Cari buku (ID atau judul)</label>
+            <input
+              id="cari-buku"
+              type="search"
+              placeholder="Ketik ID seperti BK-001 atau kata pada judul"
+              autocomplete="off"
+            >
+          </div>
+          <div class="field filter-field">
+            <label for="filter-stok">Filter status</label>
+            <select id="filter-stok">
+              <option value="semua">Semua status</option>
+              <option value="tersedia">Tersedia</option>
+              <option value="habis">Stok habis</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="katalog-kosong" class="empty-state" hidden>
+          <p id="katalog-kosong-pesan" class="empty-title">Belum ada buku di katalog.</p>
+          <p id="katalog-kosong-detail" class="empty-detail">
+            Tambahkan buku melalui formulir Tambah Buku, atau muat contoh data uji untuk langsung mencoba alur peminjaman.
+          </p>
+          <div class="empty-actions">
+            <button type="button" id="btn-ke-tambah" class="btn btn-primary">Tambah Buku Pertama</button>
+            <button type="button" id="btn-muat-contoh" class="btn btn-secondary">Muat Contoh Buku Uji</button>
+            <button type="button" id="btn-reset-cari" class="btn btn-secondary" hidden>Tampilkan Semua Buku</button>
+          </div>
+        </div>
+
+        <div id="tabel-katalog-wrap" class="table-wrap" hidden>
+          <table class="ledger-table" id="tabel-katalog">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Judul dan Penulis</th>
+                <th scope="col">Stok</th>
+                <th scope="col">Status</th>
+                <th scope="col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-katalog"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside id="sirkulasi" class="panel desk-panel" aria-labelledby="judul-sirkulasi">
+        <div class="panel-head">
+          <div>
+            <h2 id="judul-sirkulasi">Meja Sirkulasi</h2>
+            <p class="panel-desc">Catat peminjaman, pengembalian, atau tambah koleksi baru.</p>
+          </div>
+        </div>
+
+        <div class="tablist" role="tablist" aria-label="Operasi perpustakaan">
+          <button
+            type="button"
+            role="tab"
+            id="tab-pinjam"
+            aria-selected="true"
+            aria-controls="panel-pinjam"
+            tabindex="0"
+          >
+            Pinjam
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-kembali"
+            aria-selected="false"
+            aria-controls="panel-kembali"
+            tabindex="-1"
+          >
+            Kembalikan
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-tambah"
+            aria-selected="false"
+            aria-controls="panel-tambah"
+            tabindex="-1"
+          >
+            Tambah Buku
+          </button>
+        </div>
+
+        <div role="tabpanel" id="panel-pinjam" aria-labelledby="tab-pinjam" class="tabpanel">
+          <form id="form-pinjam" novalidate>
+            <div class="field">
+              <label for="pinjam-id-buku">ID Buku</label>
+              <input
+                id="pinjam-id-buku"
+                list="datalist-buku"
+                placeholder="Pilih atau ketik ID buku, mis. BK-001"
+                autocomplete="off"
+                required
+              >
+              <datalist id="datalist-buku"></datalist>
+            </div>
+
+            <div id="cek-stok-info" class="check-readout" aria-live="polite">
+              Masukkan ID buku untuk memeriksa ketersediaan stok.
+            </div>
+
+            <div class="field">
+              <label for="pinjam-id-anggota">ID Anggota</label>
+              <input
+                id="pinjam-id-anggota"
+                list="datalist-anggota"
+                placeholder="Contoh: A-01"
+                autocomplete="off"
+              >
+              <datalist id="datalist-anggota"></datalist>
+            </div>
+
+            <div class="field">
+              <label for="pinjam-nama-anggota">Nama Anggota</label>
+              <input
+                id="pinjam-nama-anggota"
+                placeholder="Nama lengkap peminjam (wajib untuk anggota baru)"
+                autocomplete="off"
+              >
+            </div>
+
+            <div id="cek-kuota-info" class="check-readout" aria-live="polite">
+              Maksimal 3 buku aktif per anggota.
+            </div>
+
+            <p id="pinjam-error" class="field-error" role="alert" hidden></p>
+
+            <button type="submit" class="btn btn-accent btn-block">Catat Peminjaman</button>
+          </form>
+        </div>
+
+        <div role="tabpanel" id="panel-kembali" aria-labelledby="tab-kembali" class="tabpanel" hidden>
+          <form id="form-kembali" novalidate>
+            <div class="field">
+              <label for="kembali-id-transaksi">ID Transaksi Peminjaman</label>
+              <input
+                id="kembali-id-transaksi"
+                list="datalist-transaksi"
+                placeholder="Contoh: TRX-001"
+                autocomplete="off"
+                required
+              >
+              <datalist id="datalist-transaksi"></datalist>
+            </div>
+
+            <p class="hint">
+              Pengembalian hanya diproses untuk transaksi yang tercatat dan berstatus Dipinjam. Stok buku akan bertambah 1 secara otomatis.
+            </p>
+
+            <p id="kembali-error" class="field-error" role="alert" hidden></p>
+
+            <button type="submit" class="btn btn-primary btn-block">Catat Pengembalian</button>
+          </form>
+        </div>
+
+        <div role="tabpanel" id="panel-tambah" aria-labelledby="tab-tambah" class="tabpanel" hidden>
+          <form id="form-tambah" novalidate>
+            <div class="field">
+              <label for="buku-id">ID Buku</label>
+              <input id="buku-id" placeholder="Kode unik buku, mis. BK-005" autocomplete="off" required>
+            </div>
+            <div class="field">
+              <label for="buku-judul">Judul Buku</label>
+              <input id="buku-judul" placeholder="Judul lengkap buku" autocomplete="off" required>
+            </div>
+            <div class="field">
+              <label for="buku-penulis">Penulis</label>
+              <input id="buku-penulis" placeholder="Nama penulis buku" autocomplete="off" required>
+            </div>
+            <div class="field">
+              <label for="buku-stok">Stok</label>
+              <input id="buku-stok" type="number" min="0" step="1" placeholder="Jumlah eksemplar, mis. 3" required>
+            </div>
+
+            <p id="tambah-error" class="field-error" role="alert" hidden></p>
+
+            <button type="submit" class="btn btn-primary btn-block">Simpan Buku</button>
+          </form>
+        </div>
+      </aside>
+    </div>
+
+    <section id="riwayat" class="history-grid" aria-label="Catatan transaksi dan anggota">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Transaksi Peminjaman</h2>
+            <p class="panel-desc">Daftar seluruh peminjaman dan pengembalian yang tercatat.</p>
+          </div>
+          <div class="field inline-filter">
+            <label for="filter-transaksi">Tampilkan</label>
+            <select id="filter-transaksi">
+              <option value="semua">Semua transaksi</option>
+              <option value="Dipinjam">Sedang dipinjam</option>
+              <option value="Dikembalikan">Sudah dikembalikan</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="transaksi-kosong" class="empty-state" hidden>
+          <p class="empty-title">Belum ada transaksi peminjaman.</p>
+          <p class="empty-detail">
+            Catat peminjaman melalui tab Pinjam di Meja Sirkulasi setelah menambahkan atau memuat buku.
+          </p>
+        </div>
+
+        <div id="tabel-transaksi-wrap" class="table-wrap" hidden>
+          <table class="ledger-table" id="tabel-transaksi">
+            <thead>
+              <tr>
+                <th scope="col">ID Transaksi</th>
+                <th scope="col">Buku</th>
+                <th scope="col">Anggota</th>
+                <th scope="col">Waktu</th>
+                <th scope="col">Status</th>
+                <th scope="col">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-transaksi"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Anggota dan Kuota</h2>
+            <p class="panel-desc">Pemantauan batas maksimal 3 pinjaman aktif per anggota.</p>
+          </div>
+        </div>
+
+        <div id="anggota-kosong" class="empty-state" hidden>
+          <p class="empty-title">Belum ada anggota terdaftar.</p>
+          <p class="empty-detail">
+            Anggota tercatat secara otomatis saat transaksi peminjaman pertama dicatat.
+          </p>
+        </div>
+
+        <div id="tabel-anggota-wrap" class="table-wrap" hidden>
+          <table class="ledger-table" id="tabel-anggota">
+            <thead>
+              <tr>
+                <th scope="col">ID Anggota</th>
+                <th scope="col">Nama</th>
+                <th scope="col">Pinjaman Aktif</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-anggota"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>Model domain: Buku, Anggota, Peminjaman, Perpustakaan. Terhubung ke MySQL (db_perpustakaan) via API PHP.</p>
+      <div class="footer-actions">
+        <a href="Manajemen-Perpustakaan.apk" download="Manajemen-Perpustakaan.apk" id="link-unduh-apk" class="btn btn-secondary btn-sm">
+          Unduh APK Android
+        </a>
+        <button type="button" id="btn-buka-reset" class="btn btn-secondary btn-sm">
+          Kosongkan Database
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <dialog id="dialog-reset" aria-labelledby="judul-dialog-reset">
+    <div class="dialog-body">
+      <h2 id="judul-dialog-reset">Kosongkan seluruh data di database?</h2>
+      <p>
+        Tindakan ini menghapus daftar buku, anggota, dan riwayat transaksi di database MySQL db_perpustakaan.
+      </p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-batal-reset" class="btn btn-secondary">Batal</button>
+        <button type="button" id="btn-konfirmasi-reset" class="btn btn-danger">Hapus Semua Data</button>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>
