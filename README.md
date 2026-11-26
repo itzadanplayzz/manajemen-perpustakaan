@@ -250,9 +250,11 @@ flutter test
 
 ---
 
-## 👤 Author
+## 👥 Kontributor
 
-**Rahmat Rifai**
+| Nama | GitHub |
+|---|---|
+| Itzadanplayzz | [@itzadanplayzz](https://github.com/itzadanplayzz) |
+| Rahmat Rifai | [@Rahmat-Rifai](https://github.com/Rahmat-Rifai) |
 
-- GitHub: [@Rahmat-Rifai](https://github.com/Rahmat-Rifai)
-- Repo: [Rahmat-Rifai/manajemen-perpustakaan](https://github.com/Rahmat-Rifai/manajemen-perpustakaan)
+Repo: [itzadanplayzz/manajemen-perpustakaan](https://github.com/itzadanplayzz/manajemen-perpustakaan)
