@@ -89,6 +89,18 @@ erDiagram
 
 ---
 
+## 🧰 Teknologi
+
+| Lapisan | Teknologi |
+|---|---|
+| Backend / API | PHP 8.0, PDO, JSON |
+| Database | MySQL / MariaDB, InnoDB, `utf8mb4` |
+| Web | HTML5, CSS3, vanilla JavaScript (ES6) |
+| Android | Flutter 3, Dart 3.13, Material 3 |
+| Pengujian | Node.js `assert/strict`, `flutter_test` |
+
+---
+
 ## 🗂️ Struktur Repo
 
 ```text
